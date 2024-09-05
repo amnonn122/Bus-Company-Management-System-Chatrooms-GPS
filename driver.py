@@ -6,6 +6,7 @@ import rsa
 import socket
 from threading import Thread
 from functools import partial
+from kivy.clock import Clock
 
 
 from math import *
@@ -314,38 +315,35 @@ class Connected(Screen):
         while True:
             client_input = client.recv(9000000)
             decoded_input = client_input.decode("utf-8")
+            print("Received message:", decoded_input)
+            Clock.schedule_once(partial(self.update_ui, decoded_input))
 
-            if decoded_input[:5] == 'Route':
-                line = LineMapLayer(decoded_input)
-                start_coor, end_coor = line.first_last_coordinate()
-
-                MAP_LAYERS.append(line)
-                splited_input = decoded_input.split(" ")
-                route_shirshur = '[b]' + '[color=000080]Route number: ' + splited_input[2] + ", Bus number: " + \
-                                 splited_input[3] + ", Hour: " + splited_input[4][0:5] + '[/color]' + '[/b]'
+    def update_ui(self, decoded_input, *args):
+        if decoded_input[:5] == 'Route':
+            line = LineMapLayer(decoded_input)
+            start_coor, end_coor = line.first_last_coordinate()
+            MAP_LAYERS.append(line)
+            splited_input = decoded_input.split(" ")
+            route_shirshur = '[b]' + '[color=000080]Route number: ' + splited_input[2] + ", Bus number: " + splited_input[3] + ", Hour: " + splited_input[4][0:5] + '[/color]' + '[/b]'
+            self.ids['route_label'].text = route_shirshur
+            massage_text = "Route has setted, refresh your map, good work!"
+            massage = ChatText(text=massage_text, size_hint_y=None, height=50, font_size=30, background_color=(0, 0, 0, 0), cursor_color=(255, 255, 255, 255), foreground_color=(0, 0, 1, 1))
+            massage.text_size = (massage.size)
+            self.ids.layout2.add_widget(massage)
+            self.ids.mapscreen.add_layer(line, mode="scatter")
+            self.ids.start_marker.lon = start_coor[1]
+            self.ids.start_marker.lat = start_coor[0]
+            self.ids.end_marker.lon = end_coor[1]
+            self.ids.end_marker.lat = end_coor[0]
+        else:
+            if decoded_input == 'MANNAGER IS CONNECTED':
+                route_shirshur = '[b]' + '[color=000080]WAITING FOR NEXT ROUTE [/color]' + '[/b]'
                 self.ids['route_label'].text = route_shirshur
-                massage_text = "Route has setted, refresh your map, good work!"
-                massage = ChatText(text=massage_text, size_hint_y=None, height=50, font_size=30,
-                                   background_color=(0, 0, 0, 0), cursor_color=(255, 255, 255, 255),
-                                   foreground_color=(0, 0, 1, 1))
+            else:
+                massage = ChatText(text=decoded_input, size_hint_y=None, height=50, font_size=30, background_color=(0, 0, 0, 0), cursor_color=(255, 255, 255, 255), foreground_color=(0, 0, 1, 1))
                 massage.text_size = (massage.size)
                 self.ids.layout2.add_widget(massage)
-                self.ids.mapscreen.add_layer(line, mode="scatter")
 
-                self.ids.start_marker.lon = start_coor[1]
-                self.ids.start_marker.lat = start_coor[0]
-                self.ids.end_marker.lon = end_coor[1]
-                self.ids.end_marker.lat = end_coor[0]
-            else:
-                if decoded_input =='MANNAGER IS CONNECTED':
-                    route_shirshur = '[b]' + '[color=000080]WAITING FOR NEXT ROUTE [/color]' + '[/b]'
-                    self.ids['route_label'].text = route_shirshur
-                else:
-                    massage = ChatText(text=decoded_input, size_hint_y=None, height=50, font_size=30,
-                                       background_color=(0, 0, 0, 0), cursor_color=(255, 255, 255, 255),
-                                       foreground_color=(0, 0, 1, 1))
-                    massage.text_size = (massage.size)
-                    self.ids.layout2.add_widget(massage)
 
 
 #this class is responsible for the try again screen if the worker number didnt correct

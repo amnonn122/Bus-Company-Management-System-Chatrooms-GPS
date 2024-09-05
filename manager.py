@@ -8,8 +8,7 @@ from kivy.uix.button import *
 from kivy.lang import Builder
 import rsa
 import socket
-import os
-import subprocess
+from kivy.clock import Clock
 from threading import Thread
 from functools import partial
 
@@ -250,13 +249,19 @@ class Connected(Screen):
             try:
                 client_input = client.recv(1024)
                 decoded_input = client_input.decode("utf-8")
-                massage = ChatText(text=decoded_input, size_hint_y=None, height=50, font_size=30,
-                                   background_color=(0, 0, 0, 0), cursor_color=(1, 1, 1, 1),
-                                   foreground_color=(255, 255, 255, 255))
-                massage.text_size = (massage.size)
-                self.ids.layout2.add_widget(massage)
-            except:
-                pass
+                print("Received message:", decoded_input)
+                Clock.schedule_once(lambda dt: self.display_message(decoded_input))
+            except Exception as e:
+                print("Error receiving message:", e)
+
+    def display_message(self, message):
+        massage = ChatText(text=message, size_hint_y=None, height=50, font_size=30,
+                        background_color=(0, 0, 0, 0), cursor_color=(1, 1, 1, 1),
+                        foreground_color=(255, 255, 255, 255))
+        massage.text_size = (massage.size)
+        self.ids.layout2.add_widget(massage)
+        self.ids.layout2.do_layout()
+
 
     def managerPopup(self):
 
